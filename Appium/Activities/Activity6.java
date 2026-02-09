@@ -1,56 +1,94 @@
-package Project;
+package activities;
 
+import static org.testng.Assert.assertTrue;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.testng.Assert;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Point;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 
 public class Activity6 {
+	AndroidDriver driver;
+	WebDriverWait wait;
 
-    public static void main(String[] args) throws Exception {
-        UiAutomator2Options options = new UiAutomator2Options();
-        options.setPlatformName("Android");
-        options.setAutomationName("UiAutomator2");
-        options.setAppPackage("com.android.chrome");
-        options.setAppActivity("com.google.android.apps.chrome.Main");
+	@BeforeClass
+	public void setUp() throws MalformedURLException, URISyntaxException {
+		// Desired Capabilities
+		UiAutomator2Options options = new UiAutomator2Options();
+		options.setPlatformName("Android");
+		options.setAutomationName("UiAutomator2");
+		options.setAppPackage("com.android.chrome");
+		options.setAppActivity("com.google.android.apps.chrome.Main");
+		options.noReset();
 
-        URL serverURL = new URI("http://127.0.0.1:4723/wd/hub").toURL();
-        AndroidDriver driver = new AndroidDriver(serverURL, options);
+		// Server URL
+		URL serverURL = new URI("http://localhost:4723").toURL();
 
-        try {
-           
-            driver.get("https://training-support.net/webelements");
+		// Driver initialization
+		driver = new AndroidDriver(serverURL, options);
+		wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-            driver.findElement(By.xpath("//android.view.View[@text='Popups']")).click();
-            driver.findElement(By.id("signInButton")).click();
+		driver.get("https://training-support.net/webelements/sliders");
+	}
 
-            WebElement username = driver.findElement(By.id("username"));
-            WebElement password = driver.findElement(By.id("password"));
+	@Test
+	public void volume75Test() {
+		
+		wait.until(ExpectedConditions.elementToBeClickable(AppiumBy.xpath("//android.widget.SeekBar")));
+		Dimension dims = driver.manage().window().getSize();
+		Point start = new Point((int) (dims.getWidth() * .50), (int) (dims.getHeight() * .77));
+		Point end = new Point((int) (dims.getWidth() * .67), (int) (dims.getHeight() * .77));
+		// Perform swipe
+		doSwipe(driver, start, end, 2000);
 
-            username.clear();
-            username.sendKeys("admin");
-            password.clear();
-            password.sendKeys("password");
+		// Get the volume level
+		String volumeText = driver
+			.findElement(AppiumBy.xpath("//android.view.View/android.widget.TextView[contains(@text, '%')]"))
+			.getText();
 
-            driver.findElement(By.xpath("//button[text()='Log in']")).click();
+		// Assertions
+		assertTrue(volumeText.contains("75%"));
+	}
 
-            WebElement message = driver.findElement(By.id("action-confirmation"));
-            String msgText = message.getText();
-            System.out.println("Login message: " + msgText);
+	@Test
+	public void volume25Test() {
+		// Wait for page to load
+		wait.until(ExpectedConditions.elementToBeClickable(AppiumBy.xpath("//android.widget.SeekBar")));
+		// Get the size of the screen
+		Dimension dims = driver.manage().window().getSize();
+		// Set the start and end points
+		Point start = new Point((int) (dims.getWidth() * .50), (int) (dims.getHeight() * .77));
+		Point end = new Point((int) (dims.getWidth() * .33), (int) (dims.getHeight() * .77));
+		// Perform swipe
+		doSwipe(driver, start, end, 2000);
 
-            Assert.assertTrue(msgText.contains("Welcome Back, admin"),
-                    "Login success message not found!");
+		// Get the volume level
+		String volumeText = driver
+			.findElement(AppiumBy.xpath("//android.view.View/android.widget.TextView[contains(@text, '%')]"))
+			.getText();
 
-            System.out.println("Popup login test passed");
+		// Assertions
+		assertTrue(volumeText.contains("25%"));
+	}
 
-        } finally {
-            driver.quit();
-        }
-    }
+	@AfterClass
+	public void tearDown() {
+		
+		driver.quit();
+	}
 }
+
+

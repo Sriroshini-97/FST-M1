@@ -1,80 +1,75 @@
-package Project;
+package activities;
 
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.nativekey.AndroidKey;
+import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.android.options.UiAutomator2Options;
 
 public class Activity5 {
-
+    // Driver Declaration
     AndroidDriver driver;
+    WebDriverWait wait;
 
+    // Set up method
     @BeforeClass
-    public void setup() throws Exception {
+    public void setUp() throws MalformedURLException {
+        // Desired Capabilities
         UiAutomator2Options options = new UiAutomator2Options();
-        options.setPlatformName("Android");
+        options.setPlatformName("android");
         options.setAutomationName("UiAutomator2");
-        options.setAppPackage("com.android.chrome");
-        options.setAppActivity("com.google.android.apps.chrome.Main");
+        options.setAppPackage("com.google.android.apps.messaging");
+        options.setAppActivity(".ui.ConversationListActivity");
+        options.noReset();
 
-        URL serverURL = new URI("http://127.0.0.1:4723/wd/hub").toURL();
+        // Server Address
+        URL serverURL = new URL("http://localhost:4723/");
+
         driver = new AndroidDriver(serverURL, options);
-
-        // Open the URL once for all tests
-        driver.get("https://training-support.net/webelements");
-
-        // Scroll to Login Form card and click it
-        driver.findElement(By.xpath("//android.view.View[@text='Login Form']")).click();
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    @Test(priority = 1)
-    public void loginWithCorrectCredentials() {
-        WebElement username = driver.findElement(By.id("username"));
-        WebElement password = driver.findElement(By.id("password"));
-        WebElement submit = driver.findElement(By.xpath("//button[text()='Log in']"));
+    // Test method
+    @Test
+    public void smsTest() {
+        // Find and click the add button
+        driver.findElement(AppiumBy.accessibilityId("Start new conversation")).click();
 
-        username.clear();
-        username.sendKeys("admin");
-        password.clear();
-        password.sendKeys("password");
-        submit.click();
+        wait.until(ExpectedConditions.elementToBeClickable(
+                AppiumBy.id("recipient_text_view")
+        ));
 
-        WebElement message = driver.findElement(By.id("action-confirmation"));
-        String msgText = message.getText();
-        System.out.println("Success message: " + msgText);
+        driver.findElement(AppiumBy.id("recipient_text_view")).sendKeys("18282832912");
+        // Press ENTER
+        driver.pressKey(new KeyEvent(AndroidKey.ENTER));
 
-        Assert.assertTrue(msgText.contains("Welcome Back, admin"),
-                "Success message not displayed as expected");
+        wait.until(ExpectedConditions.elementToBeClickable(AppiumBy.id("compose_message_text")));
+
+        driver.findElement(AppiumBy.id("compose_message_text")).sendKeys("Hello from Appium");
+        // Press Send
+        driver.findElement(AppiumBy.accessibilityId("Send SMS")).click();
+
+        // Assertion
+        String messageTextSent = driver.findElement(AppiumBy.id("message_text")).getText();
+        Assert.assertEquals(messageTextSent, "Hello from Appium");
     }
 
-    @Test(priority = 2)
-    public void loginWithIncorrectCredentials() {
-        WebElement username = driver.findElement(By.id("username"));
-        WebElement password = driver.findElement(By.id("password"));
-        WebElement submit = driver.findElement(By.xpath("//button[text()='Log in']"));
-
-        username.clear();
-        username.sendKeys("admin");
-        password.clear();
-        password.sendKeys("wrongpassword");
-        submit.click();
-
-        WebElement message = driver.findElement(By.id("action-confirmation"));
-        String msgText = message.getText();
-        System.out.println("Failure message: " + msgText);
-
-        Assert.assertTrue(msgText.contains("Invalid Credentials"),
-                "Failure message not displayed as expected");
-    }
-
+    // Tear down method
     @AfterClass
     public void tearDown() {
+        // Close the app
         driver.quit();
     }
 }
+

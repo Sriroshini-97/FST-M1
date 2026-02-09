@@ -1,71 +1,66 @@
-package Project;
+package activities;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
+import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
-import io.appium.java_client.touch.LongPressOptions;
-import io.appium.java_client.touch.offset.ElementOption;
-import io.appium.java_client.TouchAction;
 
-public class Activity2 {
+public class Activity2  {
+    
+    AndroidDriver driver;
 
-    public static void main(String[] args) throws Exception {
+    @BeforeClass
+    public void setUp() throws MalformedURLException, URISyntaxException {
+        // Desired Capabilities
+        UiAutomator2Options caps = new UiAutomator2Options();
+        caps.setPlatformName("android");
+        caps.setAutomationName("UiAutomator2");
+        caps.setAppPackage("com.android.chrome");
+        caps.setAppActivity("com.google.android.apps.chrome.Main");
+//        caps.noReset();
 
-        UiAutomator2Options options = new UiAutomator2Options();
-        options.setPlatformName("Android");
-        options.setAutomationName("UiAutomator2");
-        options.setAppPackage("com.example.todolist");
-        options.setAppActivity("com.example.todolist.MainActivity");
+        // Set the Appium server URL
+        URL serverURL = new URI("http://localhost:4723").toURL();
 
-        URL serverURL = new URI("http://127.0.0.1:4723/wd/hub").toURL();
-        AndroidDriver driver = new AndroidDriver(serverURL, options);
+        driver = new AndroidDriver(serverURL, caps);
 
-        try {
-            
-            WebElement firstTask = driver.findElement(
-                    By.id("com.example.todolist:id/taskTitle"));
+        driver.get("https://training-support.net");
+    }
 
-            TouchAction<?> action = new TouchAction<>(driver);
-            action.longPress(
-                    LongPressOptions.longPressOptions()
-                            .withElement(ElementOption.element(firstTask))
-                            .withDuration(java.time.Duration.ofSeconds(2)))
-                  .release()
-                  .perform();
-            driver.findElement(By.id("com.example.todolist:id/deadlineButton")).click();
+   
+    @Test
+    public void chromeTest() {
+        // Find heading on the page
+        String pageHeading = driver.findElement(AppiumBy.xpath(
+                "//android.widget.TextView[@text='Training Support']")).getText();
 
-            LocalDate today = LocalDate.now();
-            LocalDate nextSaturday = today.with(
-                    java.time.temporal.TemporalAdjusters.next(DayOfWeek.SATURDAY));
+        // Print to console
+        System.out.println("Heading: " + pageHeading);
 
-            String day = String.valueOf(nextSaturday.getDayOfMonth());
+        // Find and click the About Us link
+        driver.findElement(AppiumBy.accessibilityId("About Us")).click();
 
-            // 5️⃣ Select day in DatePicker
-            driver.findElement(By.xpath(
-                    "//android.view.View[@text='" + day + "']")).click();
+        // Find heading of new page and print to console
+        String aboutPageHeading = driver.findElement(AppiumBy.xpath(
+                "//android.widget.TextView[@text='About Us']")).getText();
+        System.out.println(aboutPageHeading);
+    }
 
-            driver.findElement(By.id("android:id/button1")).click(); // OK
 
-            driver.findElement(By.id("com.example.todolist:id/saveButton")).click();
-
-            String deadlineText = driver.findElement(
-                    By.id("com.example.todolist:id/deadlineText")).getText();
-
-            Assert.assertTrue(deadlineText.contains("Sat"),
-                    "Deadline was not set correctly");
-
-            System.out.println("✅ Deadline successfully set to next Saturday");
-
-        } finally {
-            driver.quit();
-        }
+    // Tear down method
+    @AfterClass
+    public void tearDown() {
+        // Close the app
+        driver.quit();
     }
 }
+
+
