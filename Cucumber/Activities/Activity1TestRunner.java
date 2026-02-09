@@ -1,4 +1,4 @@
-package Activity1;
+package testRunner;
 
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -17,5 +17,4 @@ import io.cucumber.junit.platform.engine.Constants;
   key = Constants.FILTER_TAGS_PROPERTY_NAME,
   value = "@activity1")
 
-public class Activity1 {}
-
+public class Activity1TestRunner {}
