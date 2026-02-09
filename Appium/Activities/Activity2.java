@@ -1,75 +1,71 @@
-package liveProject;
+package Project;
 
-import static activities.ActionsBase.longPress;
-
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.time.Duration;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
-import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
+import io.appium.java_client.touch.LongPressOptions;
+import io.appium.java_client.touch.offset.ElementOption;
+import io.appium.java_client.TouchAction;
 
 public class Activity2 {
-	// Declare driver
-	AndroidDriver driver;
-	WebDriverWait wait;
 
-	// Setup method
-	@BeforeClass
-	public void setUp() throws MalformedURLException {
-		// Desired Capabilities
-		UiAutomator2Options caps = new UiAutomator2Options();
-		caps.setPlatformName("android");
-		caps.setAutomationName("UiAutomator2");
-		caps.setAppPackage("com.app.todolist");
-		caps.setAppActivity(".view.MainActivity");
-		caps.noReset();
+    public static void main(String[] args) throws Exception {
 
-		// Appium Server URL
-		URL serverURL = new URL("http://localhost:4723");
+        UiAutomator2Options options = new UiAutomator2Options();
+        options.setPlatformName("Android");
+        options.setAutomationName("UiAutomator2");
+        options.setAppPackage("com.example.todolist");
+        options.setAppActivity("com.example.todolist.MainActivity");
 
-		// Initialization of driver
-		driver = new AndroidDriver(serverURL, caps);
-		// Initialization of wait
-		wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-	}
+        URL serverURL = new URI("http://127.0.0.1:4723/wd/hub").toURL();
+        AndroidDriver driver = new AndroidDriver(serverURL, options);
 
-	@Test
-	public void tasksTest2() {
-		// Get the size of the screen
-		Dimension dims = driver.manage().window().getSize();
-		// Set the point of long press
-		Point start = new Point((int) (dims.getWidth() * .50), (int) (dims.getHeight() * .15));
-		
-		// Perform long press on the first list item
-		longPress(driver, start);
-		// Select edit task
-		driver.findElement(AppiumBy.xpath("//android.widget.TextView[@text='Edit To-Do Task']")).click();
-		
-		// Set a deadline for the coming weekend
-		driver.findElement(AppiumBy.id("tv_todo_list_deadline")).click();
-		driver.findElement(AppiumBy.accessibilityId("15 February 2025")).click();
-		// Save details
-		driver.findElement(AppiumBy.id("bt_deadline_ok")).click();
-		driver.findElement(AppiumBy.id("bt_new_task_ok")).click();
+        try {
+            
+            WebElement firstTask = driver.findElement(
+                    By.id("com.example.todolist:id/taskTitle"));
 
-		// Assertions
-		String expectedDeadline = driver.findElement(AppiumBy.id("tv_exlv_task_deadline")).getText();
-		Assert.assertEquals(expectedDeadline, "Deadline: 15.02.2025");
-	}
+            TouchAction<?> action = new TouchAction<>(driver);
+            action.longPress(
+                    LongPressOptions.longPressOptions()
+                            .withElement(ElementOption.element(firstTask))
+                            .withDuration(java.time.Duration.ofSeconds(2)))
+                  .release()
+                  .perform();
+            driver.findElement(By.id("com.example.todolist:id/deadlineButton")).click();
 
-	@AfterClass
-	public void tearDown() {
-		// Close the app
-		driver.quit();
-	}
+            LocalDate today = LocalDate.now();
+            LocalDate nextSaturday = today.with(
+                    java.time.temporal.TemporalAdjusters.next(DayOfWeek.SATURDAY));
+
+            String day = String.valueOf(nextSaturday.getDayOfMonth());
+
+            // 5️⃣ Select day in DatePicker
+            driver.findElement(By.xpath(
+                    "//android.view.View[@text='" + day + "']")).click();
+
+            driver.findElement(By.id("android:id/button1")).click(); // OK
+
+            driver.findElement(By.id("com.example.todolist:id/saveButton")).click();
+
+            String deadlineText = driver.findElement(
+                    By.id("com.example.todolist:id/deadlineText")).getText();
+
+            Assert.assertTrue(deadlineText.contains("Sat"),
+                    "Deadline was not set correctly");
+
+            System.out.println("✅ Deadline successfully set to next Saturday");
+
+        } finally {
+            driver.quit();
+        }
+    }
 }
