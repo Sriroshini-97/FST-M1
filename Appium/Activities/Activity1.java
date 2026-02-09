@@ -1,84 +1,71 @@
-package liveProject;
+package Project;
 
-import io.appium.java_client.AppiumBy;
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.android.options.UiAutomator2Options;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.time.Duration;
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
+import org.openqa.selenium.By;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.testng.Assert;
+import org.openqa.selenium.WebElement;
+
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.options.UiAutomator2Options;
 
 public class Activity1 {
-	// Declare driver
-	AndroidDriver driver;
-	WebDriverWait wait;
+	public static void main(String[] args) throws Exception {
+		
+		UiAutomator2Options options = new UiAutomator2Options();
+		options.setPlatformName("android");
+		options.setAutomationName("UiAutomator2");
+		options.setAppPackage("com.example.todolist");
+        options.setAppActivity("com.example.todolist.MainActivity");
+        AndroidDriver driver;
+        URL serverURL = new URI("http://127.0.0.1:4723/wd/hub").toURL();
+        driver = new AndroidDriver(serverURL, options);
+       
 
-	// Setup method
-	@BeforeClass
-	public void setUp() throws MalformedURLException {
-		// Desired Capabilities
-		UiAutomator2Options caps = new UiAutomator2Options();
-		caps.setPlatformName("android");
-		caps.setAutomationName("UiAutomator2");
-		caps.setAppPackage("com.app.todolist");
-		caps.setAppActivity(".view.MainActivity");
-		caps.noReset();
+        try {
+          
+            driver.findElement(By.id("com.example.todolist:id/addTaskButton")).click();
+            driver.findElement(By.id("com.example.todolist:id/taskName"))
+                    .sendKeys("Complete Activity 1");
 
-		// Appium Server URL
-		URL serverURL = new URL("http://localhost:4723");
+            driver.findElement(By.id("com.example.todolist:id/prioritySpinner")).click();
+            driver.findElement(By.xpath("//android.widget.TextView[@text='High']")).click();
 
-		// Initialization of driver
-		driver = new AndroidDriver(serverURL, caps);
-		// Initialization of wait
-		wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-	}
+            driver.findElement(By.id("com.example.todolist:id/saveButton")).click();
 
-	@Test
-	public void tasksTest1() {
-		// Tasks to be added
-		String[][] tasksToAdd = {
-			{"Complete Activity 1", "High"}, 
-			{"Complete Activity 2", "Medium"},
-			{"Complete Activity 3", "Low"}
-		};
+            // Task 2 
+            driver.findElement(By.id("com.example.todolist:id/addTaskButton")).click();
+            driver.findElement(By.id("com.example.todolist:id/taskName"))
+                    .sendKeys("Complete Activity 2");
 
-		// Repeat actions for each task to add
-		for (String tasks[] : tasksToAdd) {
-			// Find the create new task button and click it
-			driver.findElement(AppiumBy.id("fab_new_task")).click();
-			// Wait for input field to show and then enter the task name
-			wait.until(ExpectedConditions.visibilityOfElementLocated(AppiumBy.id("et_new_task_name")))
-					.sendKeys(tasks[0]);
-			// Set the priority
-			driver.findElement(AppiumBy.id("com.app.todolist:id/tv_new_task_priority")).click();
-			wait.until(ExpectedConditions.elementToBeClickable(
-				AppiumBy.xpath("//android.widget.TextView[@resource-id='android:id/title' and @text='"+ tasks[1] +"']")))
-				.click();
-			// Click Save
-			driver.findElement(AppiumBy.id("bt_new_task_ok")).click();
-		}
+            driver.findElement(By.id("com.example.todolist:id/prioritySpinner")).click();
+            driver.findElement(By.xpath("//android.widget.TextView[@text='Medium']")).click();
 
-		// Assertions
-		// Find all the added tasks
-		List<WebElement> tasksAdded = wait.until(ExpectedConditions.
-			numberOfElementsToBe(AppiumBy.id("com.app.todolist:id/rl_exlv_task_group_root"), 3));
-		// Verify number of tasks added
-		assertEquals(tasksAdded.size(), 3);
-	}
+            driver.findElement(By.id("com.example.todolist:id/saveButton")).click();
 
-	@AfterClass
-	public void tearDown() {
-		// Close the app
-		driver.quit();
-	}
+            //Task 3 
+            driver.findElement(By.id("com.example.todolist:id/addTaskButton")).click();
+            driver.findElement(By.id("com.example.todolist:id/taskName"))
+                    .sendKeys("Complete Activity 3");
 
+            driver.findElement(By.id("com.example.todolist:id/prioritySpinner")).click();
+            driver.findElement(By.xpath("//android.widget.TextView[@text='Low']")).click();
+
+            driver.findElement(By.id("com.example.todolist:id/saveButton")).click();
+
+            List<WebElement> tasks =
+                    driver.findElements(By.id("com.example.todolist:id/taskTitle"));
+
+            Assert.assertEquals(tasks.size(), 3, "All three tasks were not added");
+
+            System.out.println("Three tasks added successfully");
+
+        } finally {
+            driver.quit();
+        }
+    }
 }
+
