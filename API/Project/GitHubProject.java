@@ -15,7 +15,7 @@ import io.restassured.specification.ResponseSpecification;
 
 public class GitHubProject {
 	//SSH Key to test with GitHub API
-	String sshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKhwOf9bEW6yl5IrQ81R1LdZRMVGsIfcMT1ha0ACBZNi";
+	String sshKey = "";
 	//Temp variable to hold the SSH Key ID
 	int keyID;
 	RequestSpecification requestSpec;
@@ -81,3 +81,4 @@ public class GitHubProject {
 			}
 }
 			
+
