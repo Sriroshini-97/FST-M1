@@ -1,100 +1,56 @@
-package liveProject;
+package Project;
 
-import static activities.ActionsBase.doSwipe;
-import static activities.ActionsBase.tap;
-import static org.testng.Assert.assertEquals;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.Duration;
 
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.testng.Assert;
 
-import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 
 public class Activity6 {
-	AndroidDriver driver;
-	WebDriverWait wait;
-	// Get width and height of the screen
-	Dimension dims;
 
-	@BeforeClass
-	public void setUp() throws MalformedURLException, URISyntaxException {
-		// Desired Capabilities
-		UiAutomator2Options options = new UiAutomator2Options();
-		options.setPlatformName("Android");
-		options.setAutomationName("UiAutomator2");
-		options.setAppPackage("com.android.chrome");
-		options.setAppActivity("com.google.android.apps.chrome.Main");
-		options.noReset();
+    public static void main(String[] args) throws Exception {
+        UiAutomator2Options options = new UiAutomator2Options();
+        options.setPlatformName("Android");
+        options.setAutomationName("UiAutomator2");
+        options.setAppPackage("com.android.chrome");
+        options.setAppActivity("com.google.android.apps.chrome.Main");
 
-		// Server URL
-		URL serverURL = new URI("http://localhost:4723").toURL();
+        URL serverURL = new URI("http://127.0.0.1:4723/wd/hub").toURL();
+        AndroidDriver driver = new AndroidDriver(serverURL, options);
 
-		// Driver initialization
-		driver = new AndroidDriver(serverURL, options);
-		wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-		
-		dims = driver.manage().window().getSize();
+        try {
+           
+            driver.get("https://training-support.net/webelements");
 
-		// Open Selenium page
-		driver.get("https://training-support.net/webelements");
-	}
+            driver.findElement(By.xpath("//android.view.View[@text='Popups']")).click();
+            driver.findElement(By.id("signInButton")).click();
 
-	@Test(priority = 1)
-	public void popupPageTest() {
-		Point start = new Point((int) (dims.getWidth() * 0.5), (int) (dims.getHeight() * 0.85));
-		Point end = new Point((int) (dims.getWidth() * 0.5), (int) (dims.getHeight() * 0.65));
+            WebElement username = driver.findElement(By.id("username"));
+            WebElement password = driver.findElement(By.id("password"));
 
-		// Wait for page to load
-		wait.until(ExpectedConditions
-			.visibilityOfAllElementsLocatedBy(AppiumBy.xpath("//android.widget.TextView[@text='WebElements']")));
+            username.clear();
+            username.sendKeys("admin");
+            password.clear();
+            password.sendKeys("password");
 
-		// Scroll(Fling) to the end of the page
-		doSwipe(driver, start, end, 110);
+            driver.findElement(By.xpath("//button[text()='Log in']")).click();
 
-		// Wait for Login Form link and click it
-		wait.until(ExpectedConditions
-			.elementToBeClickable(AppiumBy.xpath("//android.widget.TextView[contains(@text,'Popups')]")))
-			.click();
+            WebElement message = driver.findElement(By.id("action-confirmation"));
+            String msgText = message.getText();
+            System.out.println("Login message: " + msgText);
 
-		// Wait for the page to load
-		wait.until(ExpectedConditions.elementToBeClickable(AppiumBy.xpath("//android.widget.Button[@resource-id='launcher']")));
-		
-		// Assertion
-		assertEquals(driver.findElement(AppiumBy.xpath("//android.widget.TextView")).getText(), "Popups");
-	}
-	
-	@Test(priority = 2)
-	public void validLoginTest() throws InterruptedException {
-		// Point to tap to focus the form
-		Point start = new Point((int) (dims.getWidth() * 0.5), (int) (dims.getHeight() * 0.27));
-		// Find and click the button to launch the popup
-		driver.findElement(AppiumBy.xpath("//android.widget.Button[@resource-id='launcher']")).click();
-		// Click the username field to focus on it
-		tap(driver, start);
-		// Wait for form elements to load
-		wait.until(ExpectedConditions.elementToBeClickable(AppiumBy.xpath("//android.widget.Button[@text='Submit']")));
-		// Find the input fields and login
-		driver.findElement(AppiumBy.xpath("//android.widget.EditText[@resource-id='username']"))
-			.sendKeys("admin");
-		driver.findElement(AppiumBy.xpath("//android.widget.EditText[@resource-id='password']"))
-			.sendKeys("password");
-		driver.findElement(AppiumBy.xpath("//android.widget.Button[@text='Submit']")).click();
+            Assert.assertTrue(msgText.contains("Welcome Back, admin"),
+                    "Login success message not found!");
 
-		// Wait for success message to load and get text
-		String message = wait
-			.until(ExpectedConditions.visibilityOfElementLocated(AppiumBy.xpath("//android.widget.TextView[2]")))
-			.getText();
-		assertEquals(message, "Welcome Back, Admin!");
-	}
+            System.out.println("Popup login test passed");
+
+        } finally {
+            driver.quit();
+        }
+    }
 }
